@@ -1,0 +1,19 @@
+{
+  "name": "lin-cms-tp5/reflex-core",
+  "authors": [
+    {
+      "name": "wangyu",
+      "email": "china_wangyu@aliyun.com"
+    }
+  ],
+  "license": "MIT",
+  "autoload": {
+    "psr-4": {
+      "LinCmsTp5\\": "src"
+    }
+  },
+  "require": {
+    "php": ">=7.1.0",
+    "wangyu/reflex-core": "dev-master"
+  }
+}
