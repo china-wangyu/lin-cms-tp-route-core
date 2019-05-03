@@ -7,8 +7,6 @@ use LinCmsTp\reflex\Reflex;
 use think\facade\Route as Router;
 class Route
 {
-    protected static $route;
-    protected static $param;
 
     /**
      * 注册类路由
@@ -17,10 +15,14 @@ class Route
      * @throws \WangYu\exception\ReflexException
      */
     public static function cls(string $namespace,array $middleware){
-        static::$param = static::paresNamespace($namespace);
+        if (PHP_SAPI == 'cli') return;
+        $data = static::paresNamespace($namespace);
+        $urlParam = explode('/',trim($_SERVER['REQUEST_URI'],'/'));
         $actions = static::getObjectActions($namespace);
         foreach ($actions as $action){
-            static::fuc($namespace,$action,$middleware);
+            if (strtolower($data['class']) == strtolower($urlParam[1])){
+                static::fuc($namespace,$action,$middleware,$data);
+            }
         }
     }
 
@@ -31,12 +33,14 @@ class Route
      * @param array $middleware 中间件集合
      * @throws \WangYu\exception\ReflexException
      */
-    public static function fuc(string $namespace,string $function,array $middleware){
-        static::$route = (new Reflex($namespace,$function))->get('route',['rule','method']);
-        !empty(static::$route[0]['rule']) && Router::rule(
-            static::$route[0]['rule'],
-            static::$param['module'].'/'.static::$param['version'].'.'.static::$param['class'].'/'.$function,
-            static::$route[0]['method']
+    public static function fuc(string $namespace,string $function,array $middleware,array $data){
+        if (PHP_SAPI == 'cli') return;
+        $route = (new Reflex($namespace,$function))->get('route',['rule','method']);
+        if ($route[0]['rule'] != trim($_SERVER['REQUEST_URI'],'/')) return;
+        !empty($route[0]['rule']) && Router::rule(
+            $route[0]['rule'],
+            $data['module'].'/'.$data['version'].'.'.$data['class'].'/'.$function,
+            $route[0]['method']
         )->middleware($middleware)->allowCrossDomain();
     }
 
