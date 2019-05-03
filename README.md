@@ -12,6 +12,20 @@ LinCms TP5.1 的反射类核心模块封装，含路由注册，路由及请求�
 ```php
 composer require lin-cms-tp/reflex-core
 ```
+
+> 如果安装失败，报错 ` but these conflict with your requirements or minimum-stability`
+
+请在更改`composer.json`文件
+
+```php
+"require": {
+    "php": ">=7.1.0",
+    /*..... 省略*/
+    "wangyu/reflex-core": "dev-master",
+    "lin-cms-tp/reflex-core": "dev-master"
+  },
+```
+
 # 使用说明
 
 
@@ -79,12 +93,50 @@ LinRoute::cls(
 );
 ```
 
-- 配置方法注释参数验证，有两种方式
+## 配置方法注释参数验证，有两种方式
 
-  1 使用@param('参数名','参数注释','参数规则')，进行单个参数验证
+### 使用@param('参数名','参数注释','参数规则')，进行单个参数验证
 
-    '参数规则' 对应TP的验证规则，例如：@param('id','ID','require|max:1000|min:1')
+'参数规则' 对应TP的验证规则，例如：@param('id','ID','require|max:1000|min:1')
 
-  2 使用@param('验证器的命名空间'),进行方法验证
+```php
+/**
+ * 查询指定bid的图书
+ * @route('v1/book/:bid','get')
+ * @param Request $bid
+ * @param('bid','bid的图书','require')
+ * @return mixed
+ */
+public function getBook($bid)
+{
+    $result = BookModel::get($bid);
+    return $result;
+}
+```
 
-    例如：@param('\app\api\validate\user\LoginForm') 相当于调用的\app\api\validate\user\LoginForm去验证
+### 使用@param('验证器的命名空间'),进行方法验证
+  
+例如：@param('\app\api\validate\user\LoginForm') 相当于调用的\app\api\validate\user\LoginForm去验证
+    
+```php
+/**
+ * 账户登陆
+ * @route('cms/user/login','post')
+ * @param Request $request
+ * @param('\app\api\validate\user\LoginForm')
+ * @return array
+ * @throws \think\Exception
+ */
+public function login(Request $request)
+{
+    (new LoginForm())->goCheck();
+    $params = $request->post();
+
+    $user = LinUser::verify($params['nickname'], $params['password']);
+    $result = Token::getToken($user);
+
+    logger('登陆领取了令牌', $user['id'], $user['nickname']);
+
+    return $result;
+}
+```

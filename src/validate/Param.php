@@ -11,7 +11,7 @@ class Param
     public $field;
     public $request;
 
-    public function __construct($rule,Request $request,array $field = [])
+    public function __construct($rule,\think\Request $request,array $field = [])
     {
         $this->request = $request;
         $this->rule = $rule;

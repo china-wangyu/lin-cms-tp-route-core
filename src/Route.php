@@ -33,10 +33,10 @@ class Route
      */
     public static function fuc(string $namespace,string $function,array $middleware){
         static::$route = (new Reflex($namespace,$function))->get('route',['rule','method']);
-        !empty(static::$route['rule']) && Router::rule(
-            static::$route['rule'],
+        !empty(static::$route[0]['rule']) && Router::rule(
+            static::$route[0]['rule'],
             static::$param['module'].'/'.static::$param['version'].'.'.static::$param['class'].'/'.$function,
-            static::$route['method']
+            static::$route[0]['method']
         )->middleware($middleware)->allowCrossDomain();
     }
 

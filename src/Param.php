@@ -15,20 +15,20 @@ class Param
     /**
      * @var mixed 验证规则或者验证模型
      */
-    protected $rule;
+    protected $rule = [];
     /**
      * @var array 验证参数名称定义
      */
-    protected $field;
+    protected $field = [];
 
     /**
      * 权限验证
-     * @param $request
+     * @param \think\Request $request
      * @param \Closure $next
      * @return mixed
      * @throws ParamException
      */
-    public function handle($request, \Closure $next)
+    public function handle(\think\Request $request, \Closure $next)
     {
         $auth = (new Permission($this->rule,$request,$this->field))->check();
         if (!$auth) {
@@ -37,7 +37,7 @@ class Param
         return $next($request);
     }
 
-    public function setReflexParamRule(Request $request){
+    public function setReflexParamRule(\think\Request $request){
         $controller = str_replace('.',DIRECTORY_SEPARATOR,$request->controller());
         $namespace = env('APP_NAMESPACE').DIRECTORY_SEPARATOR.$request->module().DIRECTORY_SEPARATOR.
             config('url_controller_layer').DIRECTORY_SEPARATOR.$controller;
@@ -45,13 +45,13 @@ class Param
             ['name','doc','rule'],
             ['validateClass']
         ]);
-        if (!isset($param['validateClass'])){
+        if (!isset($param[0]['validateClass'])){
             foreach ($param as $item){
                 $this->rule[$item['name']] = $item['rule'];
                 $this->field[$item['name']] = $item['doc'];
             }
         }else{
-            $this->rule = $param['validateClass'];
+            $this->rule = $param[0]['validateClass'];
         }
     }
 }
