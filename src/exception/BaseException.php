@@ -6,7 +6,7 @@
  * Time: 19:50
  */
 
-namespace LinCmsTp5\exception;
+namespace LinCmsTp\exception;
 
 
 class BaseException extends \Exception

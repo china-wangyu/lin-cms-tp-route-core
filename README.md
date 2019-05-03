@@ -20,7 +20,7 @@ composer require lin-cms-tp5/reflex-core
 - 需要更改route.php文件注册路由方式
 
 ```php
-use LinCmsTp5\Route as LinRoute;
+use LinCmsTp\Route as LinRoute;
 
 // 注册类路由
 LinRoute::cls(
@@ -65,7 +65,7 @@ public function login(Request $request)
 return [
     // 默认中间件命名空间
     'default_namespace' => 'app\\http\\middleware\\',
-    'linParam' => LinCmsTp5\Param::Class
+    'linParam' => LinCmsTp\Param::Class
 ];
 ```
 

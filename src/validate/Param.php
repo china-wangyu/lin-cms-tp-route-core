@@ -1,10 +1,10 @@
 <?php
 
 
-namespace LinCmsTp5\validate;
+namespace LinCmsTp\validate;
 
 use think\Validate;
-use LinCmsTp5\exception\ParamException;
+use LinCmsTp\exception\ParamException;
 class Param
 {
     public $rule;

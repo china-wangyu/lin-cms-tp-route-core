@@ -6,7 +6,7 @@
  * Time: 23:57
  */
 
-namespace LinCmsTp5\exception;
+namespace LinCmsTp\exception;
 
 
 class ParamException extends BaseException

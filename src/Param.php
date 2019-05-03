@@ -1,14 +1,14 @@
 <?php
 
 
-namespace LinCmsTp5;
+namespace LinCmsTp;
 
-use LinCmsTp5\exception\ParamException;
-use LinCmsTp5\reflex\Reflex;
-use LinCmsTp5\validate\Param as Permission;
+use LinCmsTp\exception\ParamException;
+use LinCmsTp\reflex\Reflex;
+use LinCmsTp\validate\Param as Permission;
 /**
  * Class Param 检验路由的参数
- * @package LinCmsTp5\middleware
+ * @package LinCmsTp\middleware
  */
 class Param
 {

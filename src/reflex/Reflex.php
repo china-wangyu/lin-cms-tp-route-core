@@ -1,7 +1,7 @@
 <?php
 
 
-namespace LinCmsTp5\reflex;
+namespace LinCmsTp\reflex;
 
 
 class Reflex extends \WangYu\Reflex

@@ -1,5 +1,5 @@
 {
-  "name": "lin-cms-tp5/reflex-core",
+  "name": "lin-cms-tp/reflex-core",
   "authors": [
     {
       "name": "wangyu",
@@ -9,7 +9,7 @@
   "license": "MIT",
   "autoload": {
     "psr-4": {
-      "LinCmsTp5\\": "src"
+      "LinCmsTp\\": "src"
     }
   },
   "require": {

@@ -1,9 +1,9 @@
 <?php
 
 
-namespace LinCmsTp5;
+namespace LinCmsTp;
 
-use LinCmsTp5\reflex\Reflex;
+use LinCmsTp\reflex\Reflex;
 use think\facade\Route as Router;
 class Route
 {
