@@ -10,7 +10,7 @@ LinCms TP5.1 的反射类核心模块封装，含路由注册，路由及请求�
 # `composer`安装说明
 
 ```php
-composer require lin-cms-tp5/reflex-core
+composer require lin-cms-tp/reflex-core
 ```
 # 使用说明
 
