@@ -20,7 +20,7 @@ class Route
         static::$param = static::paresNamespace($namespace);
         $actions = static::getObjectActions($namespace);
         foreach ($actions as $action){
-            static::$route[] = (new Reflex($namespace,$action))->get('route',['rule','method']);
+            static::fuc($namespace,$action,$middleware);
         }
     }
 
@@ -33,7 +33,7 @@ class Route
      */
     public static function fuc(string $namespace,string $function,array $middleware){
         static::$route = (new Reflex($namespace,$function))->get('route',['rule','method']);
-        Router::rule(
+        !empty(static::$route['rule']) && Router::rule(
             static::$route['rule'],
             static::$param['module'].'/'.static::$param['version'].'.'.static::$param['class'].'/'.$function,
             static::$route['method']
