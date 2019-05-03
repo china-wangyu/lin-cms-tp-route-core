@@ -20,11 +20,11 @@ class Param
 
     public function check(){
         if (is_string($this->rule)) {
-           $res = (new $this->rule)->check($this->request->param());
+            $validate = new $this->rule();
         }else{
-            $validate = (new $this->rule)->make($this->rule,[],$this->field);
-            $res = $validate->check($this->request->param());
+            $validate = (new Validate())->make($this->rule,[],$this->field);
         }
+        $res = $validate->check($this->request->param());
         if(!$res){
             $e = new ParamException([
                 'message' => $validate->getError(),
