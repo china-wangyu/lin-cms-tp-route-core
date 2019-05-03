@@ -1,5 +1,6 @@
 {
   "name": "lin-cms-tp/reflex-core",
+  "description": "ThinkPHP 5.1的reflex模型composer扩展，基于`wangyu/reflex-core`扩展",
   "authors": [
     {
       "name": "wangyu",
