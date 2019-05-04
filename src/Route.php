@@ -20,7 +20,7 @@ class Route
         $urlParam = explode('/',trim($_SERVER['REQUEST_URI'],'/'));
         $actions = static::getObjectActions($namespace);
         foreach ($actions as $action){
-            if (strtolower($data['class']) == strtolower($urlParam[1])){
+            if (isset($urlParam[1]) and strtolower($data['class']) == strtolower($urlParam[1])){
                 static::fuc($namespace,$action,$middleware,$data);
             }
         }
