@@ -1,6 +1,6 @@
 {
   "name": "lin-cms-tp/reflex-core",
-  "description": "LinCms TP5.1 的反射类核心模块封装，含路由注册，路由及请求类型验证，路由参数验证中间件，方法注释参数提取器，基于`wangyu/reflex-core`扩展",
+  "description": "LinCms TP 的反射类核心模块封装，含多种路由注册模式，路由及请求类型验证,基于`wangyu/reflex-core`扩展",
   "authors": [
     {
       "name": "wangyu",
