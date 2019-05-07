@@ -11,30 +11,28 @@ class Route
 {
     /** @var Route $ins */
     protected static $ins;
-
     /** @var array $modules 模块集合 */
     protected $modules = [];
-
     /**
      * @var string $path 目录
      */
     protected $path;
-
     /**
      * @var array $reflexClassMap 反射对象集合
      */
     protected $reflexClassMap = [];
-
     /**
      * @var string $np 命名空间参数，采取（namespace param）的首字母
      */
     protected $np;
-
     /** @var object $class 类 */
     protected $class;
-
     /** @var string $action 方法 */
     protected $action;
+    // 设置默认.php
+    private $ext = '.php';
+    // 默认的所有模块
+    private $default_module = ['api'];
 
     public function __construct(string $module = '')
     {
@@ -43,6 +41,7 @@ class Route
         }
     }
 
+    // 获取类实例
     protected static function getIns(string $module = ''): self
     {
         if (!isset(static::$ins)) {
@@ -55,11 +54,11 @@ class Route
      * 注册类路由
      * @param string $namespace
      * @param array $middleware
-     * @throws \WangYu\exception\ReflexException
+     * @throws \LinCmsTp\exception\RouteException
      */
     public static function cls(string $namespace, array $middleware)
     {
-        try{
+        try {
             if (PHP_SAPI == 'cli') return;
             $ins = static::getIns();
             empty($ins->np) && $ins->setNamespaceParam($namespace);
@@ -70,7 +69,7 @@ class Route
                     static::fuc($namespace, $action, $middleware);
                 }
             }
-        }catch (\Exception $exception){
+        } catch (\Exception $exception) {
             throw new RouteException(['message' => $exception->getMessage()]);
         }
     }
@@ -78,7 +77,7 @@ class Route
     /**
      * 注册方法路由
      * @param string $namespace 类命名空间
-     * @param string $function 方法名称
+     * @param string $action 方法名称
      * @param array $middleware 中间件集合
      * @throws RouteException
      */
@@ -89,8 +88,7 @@ class Route
             $ins = static::getIns();
             empty($ins->np) && $ins->setNamespaceParam($namespace);
             $ins->action = $action;
-            $route = (new Reflex($namespace, $action))->get('route', ['rule', 'method']);
-            $ins->setRoute($route[0]['rule'], $route[0]['method'], $middleware);
+            $ins->setActionRoute(new \ReflectionClass($namespace), $ins->action);
         } catch (\Exception $exception) {
             throw new RouteException(['message' => $exception->getMessage()]);
         }
@@ -102,18 +100,12 @@ class Route
         try {
             if (PHP_SAPI == 'cli') return;
             $ins = static::getIns($module);
-            empty($ins->modules) && $ins->modules = $ins->getAllModule();
+            empty($ins->modules) && $ins->modules = $ins->default_module;
             $ins->setModulesReflexClassMap();
             $ins->setModuleRoute();
         } catch (\Exception $exception) {
             throw new RouteException(['message' => $exception->getMessage()]);
         }
-    }
-
-    // 获取默认的所有模块
-    private function getAllModule(): array
-    {
-        return ['api'];
     }
 
     // 设置模块反射类地图
@@ -131,9 +123,9 @@ class Route
         try {
             $moduleMap = [];
             $this->path = env('APP_PATH') . $module . DIRECTORY_SEPARATOR . config('url_controller_layer');
-            $classMaps = glob($this->path . '/*/*.php');
+            $classMaps = glob($this->path . '/*/*' . $this->ext);
             foreach ($classMaps as $class) {
-                $classname = strtolower(basename(trim($class, '.php')));
+                $classname = strtolower(basename(trim($class, $this->ext)));
                 if (in_array($classname, explode('/', trim(strtolower($_SERVER['REQUEST_URI']), '/'))) === false) continue;
                 $moduleMap[$classname] = new \ReflectionClass($this->getClassNamespace($class));
             }
@@ -223,7 +215,6 @@ class Route
      */
     private function getClassNamespace(string $classPath): string
     {
-        $namespace = '';
         $namespace = DIRECTORY_SEPARATOR . env('APP_NAMESPACE') . DIRECTORY_SEPARATOR . str_replace(env('APP_PATH'), '', trim($classPath, '.php'));
         $namespace = str_replace('/', '\\', $namespace);
         return $namespace;

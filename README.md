@@ -33,23 +33,41 @@ composer require lin-cms-tp/reflex-core
 
 - 需要更改route.php文件注册路由方式
 
+### 注册模块路由`LinRoute::init()`
 ```php
 use LinCmsTp\Route as LinRoute;
-
+// 注册模块路由
+LinRoute::init(); // 等于使用 LinRoute::init('api');
+```
+### 注册类路由`LinRoute::cls()`
+```php
+use LinCmsTp\Route as LinRoute;
 // 注册类路由
 LinRoute::cls(
     'app\api\controller\cms\User',
     ['Auth','Validate']
 );
-// 注册方法路由
-LinRoute::fuc(
+```
+
+### 注册方法路由`LinRoute::fuc()`
+```php
+use LinCmsTp\Route as LinRoute;
+// 注册类路由
+LinRoute::cls(
     'app\api\controller\cms\User',
-    'login',
     ['Auth','Validate']
 );
 ```
 
-- 需要在API方法注释增加`@route('路由','请求类型')`
+### 设置API方法注释`@route('路由','请求类型')`
+
+| 类型 | 模式 | 参数 | 说明 |
+| --- | --- | --- | --- |
+|类|route|rule| 路由前缀设置 |
+|Class|route|'cms/user'|  |
+|action|route|{'','get'}| 实际等于：{'cms/user/','get'} |
+|action|route|{'/user/login','post'}| 实际等于：{'/user/login','post'} |
+
 
 ```php
 /**
@@ -70,7 +88,13 @@ public function login(Request $request)
 }
 ```
 
-## 反射参数验证
+## 路由中间件
+
+
+| 类型 | 模式 | 参数 | 说明 |
+| --- | --- | --- | --- |
+|类|middleware|array| 路由中间件设置，请先在middleware.php设置好 |
+|Class|middleware|{'Auth','linRouteParam'}| 相当于设置了'Auth','linRouteParam'这两个中间件 |
 
 - 需要在系统`config`配置`middleware.php`
 
@@ -79,66 +103,20 @@ public function login(Request $request)
 return [
     // 默认中间件命名空间
     'default_namespace' => 'app\\http\\middleware\\',
-    'linParam' => LinCmsTp\Param::Class
+    'linRouteParam' => LinCmsTp\Param::Class
 ];
 ```
 
-- 需要在系统`route`配置`route.php`
-
-```php
-// 注册类路由
-LinRoute::cls(
- 'app\api\controller\cms\User',
- ['linParam']
-);
-```
-
-## 配置方法注释参数验证，有两种方式
-
-### 使用@param('参数名','参数注释','参数规则')，进行单个参数验证
-
-'参数规则' 对应TP的验证规则，例如：@param('id','ID','require|max:1000|min:1')
-
+- 需要在接口类`注释`设置`@middleware`
 ```php
 /**
- * 查询指定bid的图书
- * @route('v1/book/:bid','get')
- * @param Request $bid
- * @param('bid','bid的图书','require')
- * @return mixed
+ * Class Book
+ * @route('v1/book')
+ * @middleware('Auth')
+ * @package app\api\controller\v1
  */
-public function getBook($bid)
-{
-    $result = BookModel::get($bid);
-    return $result;
-}
-```
-
-### 使用@param('验证器的命名空间'),进行方法验证
-  
-例如：@param('\app\api\validate\user\LoginForm') 相当于调用的\app\api\validate\user\LoginForm去验证
-    
-```php
-/**
- * 账户登陆
- * @route('cms/user/login','post')
- * @param Request $request
- * @param('\app\api\validate\user\LoginForm')
- * @return array
- * @throws \think\Exception
- */
-public function login(Request $request)
-{
-    (new LoginForm())->goCheck();
-    $params = $request->post();
-
-    $user = LinUser::verify($params['nickname'], $params['password']);
-    $result = Token::getToken($user);
-
-    logger('登陆领取了令牌', $user['id'], $user['nickname']);
-
-    return $result;
-}
+class Book
+{}
 ```
 
 # 联系我们
