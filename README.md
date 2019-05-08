@@ -44,8 +44,8 @@ LinRoute::init(); // 等于使用 LinRoute::init('api');
 use LinCmsTp\Route as LinRoute;
 // 注册类路由
 LinRoute::cls(
-    'app\api\controller\cms\User',
-    ['Auth','Validate']
+    'app\api\controller\cms\User', // 类命名空间
+    ['Auth','linRouteParam'] // 中间件
 );
 ```
 
@@ -53,9 +53,10 @@ LinRoute::cls(
 ```php
 use LinCmsTp\Route as LinRoute;
 // 注册类路由
-LinRoute::cls(
-    'app\api\controller\cms\User',
-    ['Auth','Validate']
+LinRoute::fuc(
+    'app\api\controller\cms\User', // 类命名空间
+    'login', // 方法
+    ['Auth','linRouteParam'] // 中间件
 );
 ```
 

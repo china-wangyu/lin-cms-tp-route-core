@@ -21,11 +21,7 @@ class Route
      * @var array $reflexClassMap 反射对象集合
      */
     protected $reflexClassMap = [];
-    /**
-     * @var string $np 命名空间参数，采取（namespace param）的首字母
-     */
-    protected $np;
-    /** @var object $class 类 */
+    /** @var  $class 类 */
     protected $class;
     /** @var string $action 方法 */
     protected $action;
@@ -33,6 +29,14 @@ class Route
     private $ext = '.php';
     // 默认的所有模块
     private $default_module = ['api'];
+    // 中间件参数
+    protected $middleware = [];
+    // 路由规则
+    protected $rule;
+    // 方法请求
+    protected $method;
+    // 设置路由地址
+    protected $route;
 
     public function __construct(string $module = '')
     {
@@ -52,23 +56,18 @@ class Route
 
     /**
      * 注册类路由
-     * @param string $namespace
+     * @param string $class
      * @param array $middleware
      * @throws \LinCmsTp\exception\RouteException
      */
-    public static function cls(string $namespace, array $middleware)
+    public static function cls(string $class, array $middleware = [])
     {
         try {
             if (PHP_SAPI == 'cli') return;
             $ins = static::getIns();
-            empty($ins->np) && $ins->setNamespaceParam($namespace);
-            $urlParam = explode('/', trim($_SERVER['REQUEST_URI'], '/'));
-            $actions = $ins->getClassActions($namespace);
-            foreach ($actions as $action) {
-                if (isset($urlParam[1]) and strtolower($ins->np['class']) == strtolower($urlParam[1])) {
-                    static::fuc($namespace, $action, $middleware);
-                }
-            }
+            $ins->class = $class;
+            $ins->middleware = $middleware;
+            $ins->setClassRoute();
         } catch (\Exception $exception) {
             throw new RouteException(['message' => $exception->getMessage()]);
         }
@@ -76,19 +75,20 @@ class Route
 
     /**
      * 注册方法路由
-     * @param string $namespace 类命名空间
+     * @param string $class 类命名空间
      * @param string $action 方法名称
      * @param array $middleware 中间件集合
      * @throws RouteException
      */
-    public static function fuc(string $namespace, string $action, array $middleware)
+    public static function fuc(string $class, string $action, array $middleware = [])
     {
         try {
             if (PHP_SAPI == 'cli') return;
             $ins = static::getIns();
-            empty($ins->np) && $ins->setNamespaceParam($namespace);
+            $ins->class = $class;
             $ins->action = $action;
-            $ins->setActionRoute(new \ReflectionClass($namespace), $ins->action);
+            $ins->middleware = $middleware;
+            $ins->setActionRoute();
         } catch (\Exception $exception) {
             throw new RouteException(['message' => $exception->getMessage()]);
         }
@@ -127,7 +127,7 @@ class Route
             foreach ($classMaps as $class) {
                 $classname = strtolower(basename(trim($class, $this->ext)));
                 if (in_array($classname, explode('/', trim(strtolower($_SERVER['REQUEST_URI']), '/'))) === false) continue;
-                $moduleMap[$classname] = new \ReflectionClass($this->getClassNamespace($class));
+                $moduleMap[$classname] = $this->getClassNamespace($class);
             }
             $this->reflexClassMap[$module] = $moduleMap;
         } catch (\Exception $exception) {
@@ -141,54 +141,79 @@ class Route
         foreach ($this->reflexClassMap as $key => $module) {
             foreach ($module as $classname => $reflexClass) {
                 if (in_array($classname, explode('/', trim(strtolower($_SERVER['REQUEST_URI']), '/'))) === false) continue;
-                $this->class = $classname;
-                $this->setClassRoute($reflexClass);
+                $this->class = $reflexClass;
+                $this->setClassRoute();
             }
         }
     }
 
     // 设置类路由
-    private function setClassRoute(\ReflectionClass $reflectionClass): void
+    private function setClassRoute(): void
     {
-        empty($this->np) && $this->setNamespaceParam($reflectionClass->getName());
-        $actionArr = $this->getClassActions($reflectionClass->getName());
+        $actionArr = $this->getClassActions();
         foreach ($actionArr as $item) {
             $this->action = $item;
-            $this->setActionRoute($reflectionClass, $item);
+            $this->setActionRoute();
         }
     }
 
     // 设置方法路由
-    private function setActionRoute(\ReflectionClass $reflectionClass, string $action): void
+    private function setActionRoute(): void
     {
         try {
-            $reflex = new Reflex($reflectionClass);
+            // 获取反射类
+            $reflex = new Reflex($this->class);
+            // 获取反射类注释中设置的@middleware
             $middleware = $reflex->get('middleware');
+            !empty($middleware) && $this->middleware = $middleware[0];
+            // 获取类注释的路由前缀
             $group = $reflex->get('route', ['rule']);
-            $route = $reflex->setAction($action)->get('route', ['rule', 'method']);
+            // 获取方法注释的路由
+            $route = $reflex->setAction($this->action)->get('route', ['rule', 'method']);
             if (empty($route)) return;
-            if (!empty($group)) {
-                if (empty($route[0]['rule']) or substr($route[0]['rule'], 0, 1) != '/') {
-                    $route[0]['rule'] = $group[0]['rule'] . '/' . $route[0]['rule'];
-                }
-            }
-            $this->setRoute($route[0]['rule'], $route[0]['method'], empty($middleware) ? [] : $middleware[0]);
+            // 设置全局的路由规则，和路由请求
+            $this->setActionRouteRule($route[0]['rule'], isset($group[0]['rule']) ? $group[0]['rule'] : '');
+            $this->setActionRouteMethod($route[0]['method']);
+            // 设置全局的参数
+            $this->setNamespaceParam();
+            // 设置 TP路由
+            $this->setRoute();
         } catch (\Exception $exception) {
             throw new RouteException(['message' => $exception->getMessage()]);
         }
     }
 
+    // 设置路由请求方式
+    private function setActionRouteMethod(string $method):void
+    {
+        $this->method = $method;
+    }
+
+    // 获取路由规则，去掉多余/的
+    private function setActionRouteRule(string $rule, string $group = ''):void
+    {
+        if (!empty($group)) {
+            if (empty($rule) or substr($rule, 0, 1) != '/') {
+                $rule = $group . '/' . $rule;
+            }
+        }
+        $rule = ltrim($rule, '\/..\/');
+        $this->rule = '/' . $rule;
+    }
+
 
     // 设置路由
-    private function setRoute(string $rule, string $method, array $middleware = [])
+    private function setRoute():void
     {
         try {
-            if ($_SERVER['REQUEST_URI'] == '/' . $rule and $_SERVER['REQUEST_METHOD'] == strtoupper($method)) {
-                Router::rule(
-                    $rule,
-                    $this->np['module'] . '/' . $this->np['version'] . '.' . $this->np['class'] . '/' . $this->action,
-                    $method
-                )->middleware($middleware)->allowCrossDomain();
+            if (!empty($this->rule)) {
+                if (strtoupper($_SERVER['REQUEST_METHOD']) == strtoupper($this->method) or strtoupper($_SERVER['REQUEST_METHOD']) == 'OPTIONS') {
+                    Router::rule(
+                        $this->rule,
+                        $this->route,
+                        $this->method
+                    )->middleware($this->middleware)->allowCrossDomain();
+                }
             }
         } catch (\Exception $exception) {
             throw new RouteException(['message' => $exception->getMessage()]);
@@ -199,10 +224,10 @@ class Route
      * 获取对象所有的自身方法
      * @return array
      */
-    private function getClassActions(string $namespace): array
+    private function getClassActions(): array
     {
-        $parentActions = get_class_methods(get_parent_class($namespace));
-        $objectActions = get_class_methods($namespace);
+        $parentActions = get_class_methods(get_parent_class($this->class));
+        $objectActions = get_class_methods($this->class);
         if (empty($parentActions)) return $objectActions;
         $actions = array_diff($objectActions, $parentActions);
         return empty($actions) ? [] : $actions;
@@ -222,19 +247,17 @@ class Route
 
     /**
      * 获取命名空间所含有的所有参数
-     * @param string $namespace
-     * @return array
      */
-    private function setNamespaceParam(string $namespace): void
+    private function setNamespaceParam(): void
     {
         $array = [];
-        $array['class'] = basename($namespace);
-        $paresThinkNamespace = str_replace(env('APP_NAMESPACE'), '', $namespace);
+        $array['class'] = basename($this->class);
+        $paresThinkNamespace = str_replace(env('APP_NAMESPACE'), '', $this->class);
         $paresClassNamespace = str_replace('\\' . $array['class'], '', $paresThinkNamespace);
         $paresControllerNamespace = str_replace('\\' . config('url_controller_layer'), '', $paresClassNamespace);
         $namespaceArray = explode('\\', trim($paresControllerNamespace, '\\'));
         $array['module'] = isset($namespaceArray[0]) ? $namespaceArray[0] : '';
         $array['version'] = isset($namespaceArray[1]) ? $namespaceArray[1] : '';
-        $this->np = $array;
+        $this->route = $array['module'] . '/' . $array['version'] . '.' . $array['class'] . '/' . $this->action;
     }
 }
