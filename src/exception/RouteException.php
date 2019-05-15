@@ -9,9 +9,9 @@
 namespace LinCmsTp\exception;
 
 
-class RouteException extends BaseException
+class RouteException extends \LinCmsTp\exception\BaseException
 {
     public $code = 400;
-    public $message = '路由设置错误';
+    public $message = '反射路由设置错误';
     public $error_code = 66668;
 }
