@@ -253,7 +253,7 @@ class Route
     private function setNamespaceParam(): void
     {
         $array = [];
-        $array['class'] = basename($this->class);
+        $array['class'] = basename(str_replace('\\','/',$this->class));
         $paresThinkNamespace = str_replace(env('APP_NAMESPACE'), '', $this->class);
         $paresClassNamespace = str_replace('\\' . $array['class'], '', $paresThinkNamespace);
         $paresControllerNamespace = str_replace('\\' . config('url_controller_layer'), '', $paresClassNamespace);
